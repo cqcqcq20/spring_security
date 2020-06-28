@@ -1,0 +1,87 @@
+server:
+  port: 9211
+
+spring:
+  application:
+    name: user-service
+  redis:
+    database: 1
+    port: 6379
+    host: 192.168.31.52
+    jedis:
+      pool:
+        max-active: 8
+        max-idle: 8
+        min-idle: 0
+    timeout: 100ms
+  datasource:
+    type: com.alibaba.druid.pool.DruidDataSource
+    druid:
+      url: jdbc:mysql://192.168.31.52:3306/auth?useUnicode=true&characterEncoding=UTF-8&useSSL=false&serverTimezone=Asia/Shanghai
+      username: root
+      password: 123456
+      stat-view-servlet:
+        login-username: admin
+        login-password: admin
+        enabled: true
+        url-pattern: /druid/*
+      initial-size: 10
+      min-idle: 10
+      max-active: 100
+      max-wait: 65535
+      web-stat-filter:
+        enabled: true
+        url-pattern: /*
+        exclusions: "*.js,*.gif,*.jpg"
+      driver-class-name: com.mysql.cj.jdbc.Driver
+  liquibase:
+    enabled: false
+    drop-first: false
+    url: ${spring.datasource.druid.url}
+    user: ${spring.datasource.druid.username}
+    password: ${spring.datasource.druid.password}
+    change-log: classpath:liquibase/master.xml
+  kafka:
+    producer:
+      bootstrap-servers: 192.168.31.52:9092
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      batch-size: 4096
+    bootstrap-servers: 192.168.31.52:9092
+  cloud:
+    config:
+      uri: http://localhost:9202
+      label: master
+      profile: dev
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:9200/eureka
+
+security:
+  oauth2:
+    client:
+      client-id: app-client
+      client-secret: user-secret-8888
+      user-authorization-uri: http://localhost:9210/oauth/authorize
+      access-token-uri: http://localhost:9210/oauth/token
+    authorization:
+      check-token-access: http://localhost:9210/oauth/check_token
+    resource:
+      jwt:
+        key-uri: http://localhost:9210/oauth/token_key
+        key-value: dev
+
+sms:
+  verify:
+    length: 6
+    expMin: 5
+
+app:
+  password:
+    matches: "^[\\w_-]{6,16}$"
+
+logging:
+  level:
+    org.springframework.security: debug

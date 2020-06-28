@@ -1,0 +1,65 @@
+server:
+  port: 9201
+
+spring:
+  application:
+    name: zuul-service
+  redis:
+    database: 1
+    port: 6379
+    host: 192.168.31.52
+    jedis:
+      pool:
+        max-active: 8
+        max-idle: 8
+        min-idle: 0
+    timeout: 100ms
+  datasource:
+    type: com.alibaba.druid.pool.DruidDataSource
+    druid:
+      url: jdbc:mysql://192.168.31.52:3306/auth?useUnicode=true&characterEncoding=UTF-8&useSSL=false&serverTimezone=Asia/Shanghai
+      username: root
+      password: 123456
+      stat-view-servlet:
+        login-username: admin
+        login-password: admin
+        enabled: true
+        url-pattern: /druid/*
+      initial-size: 10
+      min-idle: 10
+      max-active: 100
+      max-wait: 65535
+      web-stat-filter:
+        enabled: true
+        url-pattern: /*
+        exclusions: "*.js,*.gif,*.jpg"
+      driver-class-name: com.mysql.cj.jdbc.Driver
+  liquibase:
+    enabled: false
+    drop-first: false
+    url: ${spring.datasource.druid.url}
+    user: ${spring.datasource.druid.username}
+    password: ${spring.datasource.druid.password}
+    change-log: classpath:liquibase/master.xml
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:9200/eureka/
+
+zuul:
+  routes:
+    auth:
+      path: /auth/**
+      service-id: auth-service
+      sensitiveHeaders: Cookie,Set-Cookie
+    user:
+      path: /user/**
+      service-id: user-service
+      sensitiveHeaders: Cookie,Set-Cookie
+  ignored-services: "*"
+
+sms:
+  verify:
+    length: 6
+    expMin: 5
