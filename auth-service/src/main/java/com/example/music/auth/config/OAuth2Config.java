@@ -7,10 +7,12 @@ import com.example.music.auth.service.RedisTokenService;
 import org.minbox.framework.api.boot.autoconfigure.sequence.ApiBootSequenceContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.common.exceptions.OAuth2Exception;
 import org.springframework.security.oauth2.config.annotation.configurers.ClientDetailsServiceConfigurer;
 import org.springframework.security.oauth2.config.annotation.web.configuration.AuthorizationServerConfigurerAdapter;
 import org.springframework.security.oauth2.config.annotation.web.configuration.EnableAuthorizationServer;
@@ -18,9 +20,12 @@ import org.springframework.security.oauth2.config.annotation.web.configurers.Aut
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerSecurityConfigurer;
 import org.springframework.security.oauth2.provider.CompositeTokenGranter;
 import org.springframework.security.oauth2.provider.TokenGranter;
+import org.springframework.security.oauth2.provider.error.WebResponseExceptionTranslator;
 import org.springframework.security.oauth2.provider.token.TokenEnhancer;
 import org.springframework.security.oauth2.provider.token.TokenEnhancerChain;
 import org.springframework.security.oauth2.provider.token.TokenStore;
+import com.example.music.auth.exception.CustomOAuthException;
+import org.springframework.security.oauth2.provider.token.store.JdbcTokenStore;
 import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
 
 import javax.sql.DataSource;
@@ -59,6 +64,14 @@ public class OAuth2Config extends AuthorizationServerConfigurerAdapter {
     @Autowired
     private ApiBootSequenceContext apiBootSequenceContext;
 
+    @Autowired
+    private WebResponseExceptionTranslator<OAuth2Exception> customWebResponseExceptionTranslator;
+
+    @Bean
+    public TokenStore jdbcTokenStore() {
+        return new JdbcTokenStore(dataSource);
+    }
+
     @Override
     public void configure(final AuthorizationServerEndpointsConfigurer endpoints) throws Exception {
         TokenEnhancerChain enhancerChain = new TokenEnhancerChain();
@@ -66,7 +79,7 @@ public class OAuth2Config extends AuthorizationServerConfigurerAdapter {
         enhancerList.add(jwtTokenEnhancer);
         enhancerList.add(jwtAccessTokenConverter);
         enhancerChain.setTokenEnhancers(enhancerList);
-        endpoints.tokenStore(jwtTokenStore)
+        endpoints.tokenStore(jdbcTokenStore())
                 .userDetailsService(customUserDetailsService)
                 /**
                  * 支持 password 模式
@@ -75,6 +88,8 @@ public class OAuth2Config extends AuthorizationServerConfigurerAdapter {
                 .tokenEnhancer(enhancerChain)
                 .accessTokenConverter(jwtAccessTokenConverter)
                 .tokenGranter(tokenGranter(endpoints));
+
+        endpoints.exceptionTranslator(customWebResponseExceptionTranslator);
     }
 
     private TokenGranter tokenGranter(final AuthorizationServerEndpointsConfigurer endpoints) {

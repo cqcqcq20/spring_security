@@ -1,6 +1,5 @@
 package com.example.music.user.excption;
 
-import com.example.music.common.exception.AppException;
 import com.example.music.common.exception.CommonErrorCode;
 import com.example.music.common.exception.VerifyCodeException;
 import com.example.music.common.rep.HttpResponse;
@@ -14,6 +13,9 @@ public class ExceptionAdvice {
     @ExceptionHandler(Exception.class)
     @ResponseStatus(code = HttpStatus.OK)
     public HttpResponse<?> apiException(Exception exception) {
+        if (exception instanceof CommonErrorCode) {
+            return HttpResponse.failure(((CommonErrorCode) exception).getCode(),exception.getMessage());
+        }
         return HttpResponse.failure(CommonErrorCode.ERROR_CODE_COMMON,exception.getMessage());
     }
 

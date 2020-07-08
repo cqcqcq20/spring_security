@@ -1,6 +1,5 @@
 package com.example.music.user.config.provider;
 
-import com.example.music.common.exception.AppException;
 import com.example.music.common.exception.VerifyCodeException;
 import com.example.music.common.users.UserEntity;
 import com.example.music.user.config.token.SmsCodeAuthenticationToken;
@@ -11,7 +10,6 @@ import org.apache.commons.lang.StringUtils;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.ArrayList;
 

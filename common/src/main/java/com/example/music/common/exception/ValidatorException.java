@@ -1,14 +1,10 @@
 package com.example.music.common.exception;
 
-public class AppException extends RuntimeException implements CommonErrorCode {
+public class ValidatorException extends RuntimeException implements CommonErrorCode {
 
     private int code;
 
-    public AppException(String s) {
-        this(CommonErrorCode.ERROR_CODE_COMMON,s);
-    }
-
-    public AppException(int code,String s) {
+    public ValidatorException(String s, int code) {
         super(s);
         this.code = code;
     }

@@ -1,6 +1,7 @@
 --liquibase formatted mqsql
 --changeset cq:1
 
+#OAuth 2.0 客户端
 CREATE TABLE IF NOT EXISTS `auth`.`oauth_client_details` (
        client_id VARCHAR(256) PRIMARY KEY,
        resource_ids VARCHAR(256),
@@ -13,6 +14,45 @@ CREATE TABLE IF NOT EXISTS `auth`.`oauth_client_details` (
        refresh_token_validity INTEGER,
        additional_information VARCHAR(4096),
        autoapprove VARCHAR(256)
+);
+create table if not exists oauth_client_token (
+  token_id VARCHAR(255),
+  token LONG VARBINARY,
+  authentication_id VARCHAR(255) PRIMARY KEY,
+  user_name VARCHAR(255),
+  client_id VARCHAR(255)
+);
+
+#OAuth 2.0 访问令牌
+create table if not exists oauth_access_token (
+  token_id VARCHAR(255),
+  token LONG VARBINARY,
+  authentication_id VARCHAR(255) PRIMARY KEY,
+  user_name VARCHAR(255),
+  client_id VARCHAR(255),
+  authentication LONG VARBINARY,
+  refresh_token VARCHAR(255)
+);
+
+#OAuth 2.0 刷新令牌
+create table if not exists oauth_refresh_token (
+  token_id VARCHAR(255),
+  token LONG VARBINARY,
+  authentication LONG VARBINARY
+);
+
+#OAuth 2.0 授权码
+create table if not exists oauth_code (
+  code VARCHAR(255), authentication LONG VARBINARY
+);
+
+create table if not exists oauth_approvals (
+ userId VARCHAR(255),
+ clientId VARCHAR(255),
+ scope VARCHAR(255),
+ status VARCHAR(10),
+ expiresAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+ lastModifiedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 INSERT INTO oauth_client_details    (client_id, client_secret, scope, authorized_grant_types,    web_server_redirect_uri, authorities, access_token_validity,    refresh_token_validity, additional_information, autoapprove)

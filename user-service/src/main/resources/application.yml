@@ -48,11 +48,6 @@ spring:
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
       batch-size: 4096
     bootstrap-servers: 192.168.31.52:9092
-  cloud:
-    config:
-      uri: http://localhost:9202
-      label: master
-      profile: dev
 
 eureka:
   client:

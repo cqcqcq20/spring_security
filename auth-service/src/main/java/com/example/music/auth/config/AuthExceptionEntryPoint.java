@@ -1,25 +1,34 @@
-package com.example.music.user.config.filter;
+package com.example.music.auth.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
-import org.springframework.stereotype.Component;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-@Component
-public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
+/**
+ * Created on 2018/5/24 0024.
+ *
+ * @author zlf
+ * @email i@merryyou.cn
+ * @since 1.0
+ */
+public class AuthExceptionEntryPoint implements AuthenticationEntryPoint {
+
 
     @Override
-    public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException, ServletException {
+    public void commence(HttpServletRequest request, HttpServletResponse response,
+                         AuthenticationException authException)
+            throws ServletException {
+
         Map<String,Object> map = new HashMap<>();
+        map.put("code", "401");
         map.put("message",String.format("%s,%s",request.getServletPath(),authException.getMessage()));
-        map.put("code", 401);
         response.setContentType("application/json");
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         try {
