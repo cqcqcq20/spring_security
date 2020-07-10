@@ -20,13 +20,16 @@ import org.springframework.security.oauth2.config.annotation.web.configurers.Aut
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerSecurityConfigurer;
 import org.springframework.security.oauth2.provider.CompositeTokenGranter;
 import org.springframework.security.oauth2.provider.TokenGranter;
+import org.springframework.security.oauth2.provider.client.JdbcClientDetailsService;
 import org.springframework.security.oauth2.provider.error.WebResponseExceptionTranslator;
+import org.springframework.security.oauth2.provider.token.DefaultAccessTokenConverter;
 import org.springframework.security.oauth2.provider.token.TokenEnhancer;
 import org.springframework.security.oauth2.provider.token.TokenEnhancerChain;
 import org.springframework.security.oauth2.provider.token.TokenStore;
 import com.example.music.auth.exception.CustomOAuthException;
 import org.springframework.security.oauth2.provider.token.store.JdbcTokenStore;
 import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
+import com.example.music.auth.config.token.CustomAccessTokenConverter;
 
 import javax.sql.DataSource;
 import java.util.ArrayList;
@@ -53,6 +56,9 @@ public class OAuth2Config extends AuthorizationServerConfigurerAdapter {
     private TokenStore jwtTokenStore;
 
     @Autowired
+    private JdbcTokenStore jdbcTokenStore;
+
+    @Autowired
     private JwtAccessTokenConverter jwtAccessTokenConverter;
 
     @Autowired
@@ -67,27 +73,24 @@ public class OAuth2Config extends AuthorizationServerConfigurerAdapter {
     @Autowired
     private WebResponseExceptionTranslator<OAuth2Exception> customWebResponseExceptionTranslator;
 
-    @Bean
-    public TokenStore jdbcTokenStore() {
-        return new JdbcTokenStore(dataSource);
-    }
-
     @Override
     public void configure(final AuthorizationServerEndpointsConfigurer endpoints) throws Exception {
-        TokenEnhancerChain enhancerChain = new TokenEnhancerChain();
-        List<TokenEnhancer> enhancerList = new ArrayList<>();
-        enhancerList.add(jwtTokenEnhancer);
-        enhancerList.add(jwtAccessTokenConverter);
-        enhancerChain.setTokenEnhancers(enhancerList);
-        endpoints.tokenStore(jdbcTokenStore())
-                .userDetailsService(customUserDetailsService)
-                /**
-                 * 支持 password 模式
-                 */
-                .authenticationManager(authenticationManager)
-                .tokenEnhancer(enhancerChain)
-                .accessTokenConverter(jwtAccessTokenConverter)
-                .tokenGranter(tokenGranter(endpoints));
+//        TokenEnhancerChain enhancerChain = new TokenEnhancerChain();
+//        List<TokenEnhancer> enhancerList = new ArrayList<>();
+//        enhancerList.add(jwtTokenEnhancer);
+//        enhancerList.add(jwtAccessTokenConverter);
+//        enhancerChain.setTokenEnhancers(enhancerList);
+//        endpoints.tokenStore(jdbcTokenStore)
+//                .userDetailsService(customUserDetailsService)
+//                .authenticationManager(authenticationManager)
+////                .tokenEnhancer(enhancerChain)
+//                .accessTokenConverter(new DefaultAccessTokenConverter())
+//                .tokenGranter(tokenGranter(endpoints));
+        endpoints.authenticationManager(authenticationManager)
+                .tokenStore(jdbcTokenStore)
+                .tokenGranter(tokenGranter(endpoints))
+//                .accessTokenConverter(new CustomAccessTokenConverter())
+                .userDetailsService(customUserDetailsService);
 
         endpoints.exceptionTranslator(customWebResponseExceptionTranslator);
     }
@@ -105,15 +108,20 @@ public class OAuth2Config extends AuthorizationServerConfigurerAdapter {
         return new CompositeTokenGranter(granters);
     }
 
+    @Bean
+    public JdbcClientDetailsService jdbcClientDetailsService(){
+        return new JdbcClientDetailsService(dataSource);
+    }
+
     @Override
     public void configure(ClientDetailsServiceConfigurer clients) throws Exception {
-        clients.jdbc(dataSource);
+        clients.withClientDetails(jdbcClientDetailsService());
     }
 
     @Override
     public void configure(AuthorizationServerSecurityConfigurer security) throws Exception {
         security.allowFormAuthenticationForClients();
         security.checkTokenAccess("isAuthenticated()");
-        security.tokenKeyAccess("isAuthenticated()");
+        security.tokenKeyAccess("permitAll()");
     }
 }

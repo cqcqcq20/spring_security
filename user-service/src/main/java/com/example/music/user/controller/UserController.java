@@ -8,6 +8,7 @@ import com.example.music.common.users.UserEntity;
 import com.example.music.common.utils.Validator;
 import com.example.music.user.service.CustomUserDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -20,12 +21,14 @@ public class UserController {
     private CustomUserDetailsService customUserDetailsService;
 
     @GetMapping("/profile")
+    @PreAuthorize("hasAuthority('app')")
     @ApiLog(module = "user",desc = "获取用户信息")
     public HttpResponse<UserEntity> profile(Principal principal) {
         return HttpResponse.success(customUserDetailsService.loadUserByUserId(principal.getName()));
     }
 
     @PostMapping("avatar")
+    @PreAuthorize("hasAuthority('app')")
     @ApiLog(module = "user",desc = "更新用户头像")
     @CheckParams({
             @CheckParam(value = Validator.FileContentType,argName = "avatar",express = "image/jpeg,image/png",msg = "请上传png、jpeg图片",code = 10003),

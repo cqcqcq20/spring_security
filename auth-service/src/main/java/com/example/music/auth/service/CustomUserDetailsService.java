@@ -1,6 +1,6 @@
 package com.example.music.auth.service;
 
-import com.example.music.common.users.RoleEntity;
+import com.example.music.common.users.AuthorityEntity;
 import com.example.music.common.users.UserEntity;
 import com.example.music.auth.mapper.UserMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -40,10 +40,10 @@ public class CustomUserDetailsService implements UserDetailsService {
         if (byPhone == null) {
             byPhone = createNew(username,area);
         }
-        List<RoleEntity> entities = userMapper.findRoleByUser(String.valueOf(byPhone.getId()));
+        List<AuthorityEntity> entities = userMapper.findRoleByUser(String.valueOf(byPhone.getId()));
         List<SimpleGrantedAuthority> authorities = new ArrayList<>();
         // 用户角色也应在数据库中获取
-        for (RoleEntity entity : entities) {
+        for (AuthorityEntity entity : entities) {
             authorities.add(new SimpleGrantedAuthority(entity.getName()));
         }
 

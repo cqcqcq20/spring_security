@@ -13,16 +13,16 @@ import java.util.Map;
 
 public class OAuthExceptionSerializer extends StdSerializer<CustomOAuthException> {
 
-    public OAuthExceptionSerializer(Class<CustomOAuthException> t) {
-        super(t);
+    public OAuthExceptionSerializer() {
+        super(CustomOAuthException.class);
     }
 
     @Override
     public void serialize(CustomOAuthException value, JsonGenerator gen, SerializerProvider serializerProvider) throws IOException {
         HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
         gen.writeStartObject();
-        gen.writeStringField("code", String.valueOf(value.getHttpErrorCode()));
-        gen.writeStringField("message", String.format("%s %s", request.getServletPath(), value.getMessage()));
+        gen.writeNumberField("code", value.getHttpErrorCode());
+        gen.writeStringField("msg", String.format("%s %s", request.getServletPath(), value.getMessage()));
 
         if (value.getAdditionalInformation() != null) {
             for (Map.Entry<String, String> entry : value.getAdditionalInformation().entrySet()) {

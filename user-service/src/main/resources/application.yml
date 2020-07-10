@@ -64,9 +64,8 @@ security:
     authorization:
       check-token-access: http://localhost:9210/oauth/check_token
     resource:
-      jwt:
-        key-uri: http://localhost:9210/oauth/token_key
-        key-value: dev
+      user-info-uri: http://localhost:9210/user
+      prefer-token-info: false
 
 sms:
   verify:

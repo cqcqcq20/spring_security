@@ -1,9 +1,11 @@
 package com.example.music.common.rep;
 
 import com.example.music.common.exception.CommonErrorCode;
+import com.example.music.common.serializer.ResponseSerializer;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
+@JsonSerialize(using = ResponseSerializer.class)
 public class HttpResponse<T> {
-
 
 
     public static final String MSG_SUCCESS = "success";
