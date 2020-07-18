@@ -1,18 +1,20 @@
 package com.example.music.common.users;
 
-import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.annotation.*;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @TableName("user")
 public class UserEntity {
 
-    private long id;
+    @TableId(type = IdType.ASSIGN_ID)
+    private Long id;
 
     private String createAt;
 
     private String nickname;
 
     @JsonIgnore
+    @TableField(whereStrategy = FieldStrategy.NOT_EMPTY)
     private String password;
 
     @JsonIgnore
@@ -77,5 +79,18 @@ public class UserEntity {
 
     public void setArea(String area) {
         this.area = area;
+    }
+
+    @Override
+    public String toString() {
+        return "UserEntity{" +
+                "id=" + id +
+                ", createAt='" + createAt + '\'' +
+                ", nickname='" + nickname + '\'' +
+                ", password='" + password + '\'' +
+                ", phone='" + phone + '\'' +
+                ", avatar='" + avatar + '\'' +
+                ", area='" + area + '\'' +
+                '}';
     }
 }

@@ -1,6 +1,4 @@
-package com.example.music.user.excption;
-
-import com.example.music.common.exception.CommonErrorCode;
+package com.example.music.common.exception;
 
 public enum PasswordCode implements CommonErrorCode {
     PASSWORD_WORD_NOT_MATCHES(10022,"password not matches"),

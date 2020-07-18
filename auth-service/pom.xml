@@ -7,7 +7,6 @@
         <artifactId>parent</artifactId>
         <version>0.0.1-SNAPSHOT</version>
     </parent>
-    <groupId>com.example.music.auth</groupId>
     <artifactId>auth-service</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>auth-service</name>
@@ -60,8 +59,8 @@
         </dependency>
 
         <dependency>
-            <groupId>com.example.music.common</groupId>
-            <artifactId>common</artifactId>
+            <groupId>com.example.music</groupId>
+            <artifactId>auth-baisc</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
 

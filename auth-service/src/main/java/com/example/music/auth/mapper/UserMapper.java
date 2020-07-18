@@ -14,6 +14,9 @@ public interface UserMapper extends BaseMapper<UserEntity> {
     @Select("select * from user where phone = #{phone} and area = #{area}")
     UserEntity findByPhone(String phone,String area);
 
+    @Select("select * from user where id = #{id} or phone = #{phone}")
+    UserEntity findByPhoneOrId(String phone,String id);
+
     @Select("SELECT user.id,role.name FROM user_role JOIN user ON user.id=user_role.uid JOIN role ON user_role.rid=role.id WHERE user_role.uid=#{uid} ")
     List<AuthorityEntity> findRoleByUser(String uid);
 }

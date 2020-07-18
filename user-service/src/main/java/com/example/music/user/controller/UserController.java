@@ -1,15 +1,19 @@
 package com.example.music.user.controller;
 
-import com.example.music.common.annotation.ApiLog;
 import com.example.music.common.annotation.CheckParam;
 import com.example.music.common.annotation.CheckParams;
 import com.example.music.common.rep.HttpResponse;
+import com.example.music.auth.basic.aop.ApiLog;
 import com.example.music.common.users.UserEntity;
 import com.example.music.common.utils.Validator;
 import com.example.music.user.service.CustomUserDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.security.Principal;

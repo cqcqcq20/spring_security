@@ -6,11 +6,11 @@ public interface CommonErrorCode {
 
     int ERROR_CODE_COMMON = 10001;
 
+    int ERROR_CODE_SERVER_500 = 500;
+
     int VERIFY_CODE_ERROR = 10020;
 
     int VALIDATOR_FAILURE_ERROR = 10002;
-
-    int OAUTH_FAILURE = 10000;
 
     int getCode();
 

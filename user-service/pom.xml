@@ -7,7 +7,6 @@
         <artifactId>parent</artifactId>
         <version>0.0.1-SNAPSHOT</version>
     </parent>
-    <groupId>com.example.music.user</groupId>
     <artifactId>user-service</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>user-service</name>
@@ -66,17 +65,18 @@
             <artifactId>commons-pool2</artifactId>
         </dependency>
 
-        <!-- kafka  -->
         <dependency>
-            <groupId>org.springframework.kafka</groupId>
-            <artifactId>spring-kafka</artifactId>
+            <groupId>com.example.music</groupId>
+            <artifactId>auth-baisc</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
         </dependency>
 
         <dependency>
-            <groupId>com.example.music.common</groupId>
-            <artifactId>common</artifactId>
+            <groupId>com.example.music</groupId>
+            <artifactId>auth-baisc</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
+
 
         <dependency>
             <groupId>org.springframework.boot</groupId>

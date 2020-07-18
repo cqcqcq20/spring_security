@@ -1,14 +1,14 @@
-package com.example.music.user.aop;
+package com.example.music.auth.basic.aop;
 
-import com.example.music.common.annotation.ApiLog;
+import com.example.music.common.exception.CommonErrorCode;
 import com.example.music.common.rep.HttpResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
-import org.aspectj.lang.annotation.AfterReturning;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.configurationprocessor.json.JSONObject;
+import org.springframework.core.Ordered;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -16,16 +16,22 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
 @Aspect
 @Component
 @Slf4j
-public class LogAspect {
+public class LogAspect implements Ordered {
 
     @Autowired
     private KafkaTemplate<String,Object> kafkaTemplate;
+
+    @Override
+    public int getOrder() {
+        return 0;
+    }
 
     @Around("@annotation(apiLog)")
     public Object doAround(ProceedingJoinPoint joinPoint, ApiLog apiLog) throws Throwable {
@@ -48,21 +54,30 @@ public class LogAspect {
 
         message.put("ip", getIpAddr(request));
         message.put("port", request.getRemotePort());
-        message.put("url", request.getRequestURI());//url
+        message.put("url", String.format("%s%s",apiLog.module(),request.getRequestURI()));//url
         message.put("method", request.getMethod());//请求方法
         message.put("entry", joinPoint.getSignature().getName());//调用方法
         message.put("params",mapToString(request.getParameterMap()));//参数
 
         result = joinPoint.proceed();
         if (result instanceof HttpResponse) {
-            HttpResponse<?> response = (HttpResponse<?>) result;
-            message.put("code",response.getCode());
-            message.put("msg",response.getMsg());
-
+            HttpResponse<?> httpResponse = (HttpResponse<?>) result;
+            message.put("code",httpResponse.getCode());
+            message.put("msg",httpResponse.getMsg());
         }
         kafkaTemplate.send("service-request-log",message.toString());
         log.info(message.toString());
         return result;
+    }
+
+    private Object doProcessException(Exception e,JSONObject message) throws Exception {
+        if (e instanceof CommonErrorCode) {
+            CommonErrorCode commonErrorCode = (CommonErrorCode) e;
+            message.put("code",commonErrorCode.getCode());
+            message.put("msg",commonErrorCode.getMsg());
+            return HttpResponse.failure(commonErrorCode.getCode(),commonErrorCode.getMsg());
+        }
+        return HttpResponse.failure(CommonErrorCode.ERROR_CODE_SERVER_500,e.getClass().getName());
     }
 
     //如果不需要ip地址，这段可以省略

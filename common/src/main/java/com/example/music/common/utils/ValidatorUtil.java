@@ -1,5 +1,7 @@
 package com.example.music.common.utils;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
 public class ValidatorUtil {
@@ -30,5 +32,19 @@ public class ValidatorUtil {
             }
         }
         return false;
+    }
+
+    public static Boolean isMatchRegex(Object value, String express) {
+        if (null == value) {
+            return false;
+        }
+        return value.toString().matches(express);
+    }
+
+    public static boolean password(Object value,String express) {
+        if (null == value) {
+            return false;
+        }
+        return value.toString().matches("^[\\w_-]{6,16}$");
     }
 }

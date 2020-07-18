@@ -1,9 +1,10 @@
-package com.example.music.user.aop;
+package com.example.music.common.aop;
 
 import com.alibaba.fastjson.JSONObject;
 import com.example.music.common.annotation.CheckParam;
 import com.example.music.common.annotation.CheckParams;
 import com.example.music.common.exception.ValidatorException;
+import com.example.music.common.rep.HttpResponse;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.Signature;
@@ -11,46 +12,43 @@ import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
 import org.aspectj.lang.reflect.MethodSignature;
+import org.springframework.core.Ordered;
 import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Method;
 
-import static com.example.music.common.exception.CommonErrorCode.VALIDATOR_FAILURE_ERROR;
-
 @Aspect
 @Component
-public class ValidatorParamAop {
+public class ValidatorParamAop implements Ordered {
 
-    @Pointcut("@annotation(com.example.music.common.annotation.CheckParam)")
-    public void checkParam() {
-
+    @Override
+    public int getOrder() {
+        return 0;
     }
 
-    @Pointcut("@annotation(com.example.music.common.annotation.CheckParams)")
-    public void checkParams() {
-
-    }
-
-    @Around("checkParam()")
-    public Object check1(ProceedingJoinPoint point) throws Throwable {
+    @Around("@annotation(checkParam)")
+    public Object check1(ProceedingJoinPoint point,CheckParam checkParam) throws Throwable {
         Object obj;
         // 参数校验
-        ValidatorException msg = doCheck(point, false);
-        if (null != msg) {
-            throw msg;
+        obj = doCheck(point, checkParam);
+        if (obj != null) {
+            return obj;
         }
         // 通过校验，继续执行原有方法
         obj = point.proceed();
         return obj;
     }
 
-    @Around("checkParams()") // 这里要换成自定义注解的路径
-    public Object check2(ProceedingJoinPoint point) throws Throwable {
+    @Around("@annotation(checkParams)") // 这里要换成自定义注解的路径
+    public Object check2(ProceedingJoinPoint point,CheckParams checkParams) throws Throwable {
         Object obj;
         // 参数校验
-        ValidatorException msg = doCheck(point, true);
-        if (null != msg) {
-            throw msg;
+        CheckParam[] value = checkParams.value();
+        for (CheckParam item : value) {
+            obj = doCheck(point,item);
+            if (obj != null) {
+                return obj;
+            }
         }
         // 通过校验，继续执行原有方法
         obj = point.proceed();
@@ -61,52 +59,24 @@ public class ValidatorParamAop {
      * 参数校验
      *
      * @param point 切点
-     * @param multi 多参数校验
+     * @param anno 多参数校验
      * @return 错误信息
      */
-    private ValidatorException doCheck(JoinPoint point, boolean multi) {
-        Method method = this.getMethod(point);
+    private Object doCheck(JoinPoint point, CheckParam anno) {
         String[] paramName = this.getParamName(point);
         Object[] arguments = point.getArgs();    // 获取接口传递的所有参数
-
-        Boolean isValid = true;
-        String msg = null;
-        int code = VALIDATOR_FAILURE_ERROR;
-        if (multi) {    // 多个参数校验
-            CheckParams annotation = method.getAnnotation(CheckParams.class);    // AOP监听带注解的方法，所以不用判断注解是否为空
-            CheckParam[] annos = annotation.value();
-            for (CheckParam anno : annos) {
-                String argName = anno.argName();
-                Object value = this.getParamValue(arguments, paramName, argName);    //参数值
-                isValid = anno.value().fun.apply(value, anno.express());    // 执行判断 // 调用枚举类的 CheckUtil类方法
-                if (!isValid) {    // 只要有一个参数判断不通过，立即返回
-                    msg = anno.msg();
-                    if ("".equals(msg)) {
-                        msg = argName + ": " + anno.value().msg + " " + anno.express();
-                    }
-                    code = anno.code();
-                    break;
-                }
-            }
-        } else {    // 单个参数校验
-            CheckParam anno = method.getAnnotation(CheckParam.class);        // AOP监听带注解的方法，所以不用判断注解是否为空
-
-            String argName = anno.argName();
-            Object value = this.getParamValue(arguments, paramName, argName);    //参数值
-            isValid = anno.value().fun.apply(value, anno.express());    // 执行判断 // 调用枚举类的 CheckUtil类方法
-            msg = anno.msg();
-            if ("".equals(msg)) {
-                msg = argName + ": " + anno.value().msg + " " + anno.express();
-            }
-            code = anno.code();
-        }
+        String argName = anno.argName();
+        Object value = this.getParamValue(arguments, paramName, argName);    //参数值
+        boolean isValid = anno.value().fun.apply(value, anno.express());    // 执行判断 // 调用枚举类的 CheckUtil类方法
         if (isValid) {
-            // log.info("参数校验通过");
             return null;
-        } else {
-            // log.error("参数校验不通过");
-            return new ValidatorException(msg,code);
         }
+        String msg = anno.msg();
+        if ("".equals(msg)) {
+            msg = argName + ": " + anno.value().msg + " " + anno.express();
+        }
+        int code = anno.code();
+        return HttpResponse.failure(code,msg);
     }
 
     /**

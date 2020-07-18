@@ -1,5 +1,8 @@
 package com.example.music.auth.config;
 
+import com.example.music.auth.basic.config.UnAuthenticationEntryPoint;
+import com.example.music.auth.basic.config.handler.AuthAccessDeniedHandler;
+import com.example.music.common.aop.ValidatorParamAop;
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -7,7 +10,6 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.oauth2.provider.authentication.OAuth2AuthenticationProcessingFilter;
 
 /**
  * WebSecurityConfig
@@ -36,10 +38,10 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
      */
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        http.authorizeRequests().antMatchers("/oauth/**").permitAll()
+        http.authorizeRequests().antMatchers("/oauth/**","/password/forget","/sms/send").permitAll()
                 .and().authorizeRequests().anyRequest().authenticated()
+                .and().exceptionHandling().accessDeniedHandler(new AuthAccessDeniedHandler()).authenticationEntryPoint(new UnAuthenticationEntryPoint())
                 .and().csrf().disable();
     }
-
 
 }

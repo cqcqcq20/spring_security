@@ -1,8 +1,8 @@
 package com.example.music.auth.serializer;
 
+import com.example.music.auth.exception.CustomOAuthException;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializerProvider;
-import com.example.music.auth.exception.CustomOAuthException;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;

@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 @Component("userMapper")
 public interface UserMapper extends BaseMapper<UserEntity> {
 
-    @Select("select * from user where phone = #{phone} and area = #{area}")
+    @Select("select * from user where phone = #{phone} and area = #{area} limit 1")
     UserEntity findByPhone(String phone,String area);
 
 }

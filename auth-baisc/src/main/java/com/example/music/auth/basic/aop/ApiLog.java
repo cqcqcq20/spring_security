@@ -1,4 +1,4 @@
-package com.example.music.common.annotation;
+package com.example.music.auth.basic.aop;
 
 import java.lang.annotation.*;
 

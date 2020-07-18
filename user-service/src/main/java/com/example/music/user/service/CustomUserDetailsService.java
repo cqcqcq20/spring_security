@@ -5,18 +5,11 @@ import com.example.music.common.users.UserEntity;
 import com.example.music.user.mapper.UserMapper;
 import org.apache.commons.lang.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-
-@Component("CustomUserDetailsService")
+@Component("customUserDetailsService")
 public class CustomUserDetailsService {
 
     @Autowired

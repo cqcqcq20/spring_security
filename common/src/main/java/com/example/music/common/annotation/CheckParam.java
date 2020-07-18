@@ -2,14 +2,10 @@ package com.example.music.common.annotation;
 
 import com.example.music.common.exception.CommonErrorCode;
 import com.example.music.common.utils.Validator;
-import com.example.music.common.utils.ValidatorUtil;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.lang.annotation.*;
 
-@Target(ElementType.METHOD)
+@Target(ElementType.PARAMETER)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface CheckParam {
 

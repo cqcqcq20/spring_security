@@ -14,7 +14,7 @@ import java.util.Map;
  * @author fengzheng
  * @date 2019/10/12
  */
-public class JWTokenEnhancer implements TokenEnhancer {
+public class AuthTokenEnhancer implements TokenEnhancer {
 
     @Override
     public OAuth2AccessToken enhance(OAuth2AccessToken oAuth2AccessToken, OAuth2Authentication oAuth2Authentication) {

@@ -21,6 +21,7 @@
         <module>zuul-service</module>
         <module>auth-service</module>
         <module>user-service</module>
+        <module>auth-baisc</module>
     </modules>
 
     <properties>

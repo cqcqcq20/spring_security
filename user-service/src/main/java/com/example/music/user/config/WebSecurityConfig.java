@@ -1,5 +1,7 @@
 package com.example.music.user.config;
 
+import com.example.music.auth.basic.config.UnAuthenticationEntryPoint;
+import com.example.music.auth.basic.config.handler.AuthAccessDeniedHandler;
 import com.example.music.user.config.provider.SmsCodeAuthenticationProvider;
 import com.example.music.user.service.CustomUserDetailsService;
 import com.example.music.user.service.RedisTokenService;
@@ -28,7 +30,12 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        http.authenticationProvider(authenticationProvider());
+        http.authenticationProvider(authenticationProvider())
+                .exceptionHandling().accessDeniedHandler(new AuthAccessDeniedHandler()).authenticationEntryPoint(provideUnAuthenticationEntryPoint());
+    }
+
+    private UnAuthenticationEntryPoint provideUnAuthenticationEntryPoint() {
+        return new UnAuthenticationEntryPoint();
     }
 
     private SmsCodeAuthenticationProvider authenticationProvider() {

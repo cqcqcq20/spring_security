@@ -1,6 +1,5 @@
 package com.example.music.user.controller.auth;
 
-import com.example.music.common.annotation.ApiLog;
 import com.example.music.common.rep.HttpResponse;
 import com.example.music.user.service.RedisTokenService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +16,6 @@ public class SmsController {
     private RedisTokenService redisTokenService;
 
     @PostMapping("send")
-    @ApiLog(module = "user",desc = "发送验证码")
     public Object sendCode(@RequestParam(value = "type") String type,
                            @RequestParam("phone") String phone,
                            @RequestParam("area") String area) {

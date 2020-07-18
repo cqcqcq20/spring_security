@@ -1,17 +1,13 @@
 package com.example.music.user.config;
 
-import com.example.music.user.config.filter.AuthAccessDeniedHandler;
-import com.example.music.user.config.filter.UnAuthenticationEntryPoint;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
+import com.example.music.auth.basic.config.UnAuthenticationEntryPoint;
+import com.example.music.auth.basic.config.handler.AuthAccessDeniedHandler;
+import com.example.music.user.config.token.CustomRemoteTokenServices;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
-import org.springframework.http.MediaType;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -21,13 +17,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.config.annotation.web.configuration.EnableResourceServer;
 import org.springframework.security.oauth2.config.annotation.web.configuration.ResourceServerConfigurerAdapter;
 import org.springframework.security.oauth2.config.annotation.web.configurers.ResourceServerSecurityConfigurer;
-import org.springframework.security.oauth2.provider.token.RemoteTokenServices;
 import org.springframework.security.oauth2.provider.token.TokenStore;
 import org.springframework.security.oauth2.provider.token.store.redis.RedisTokenStore;
 import org.springframework.web.client.RestTemplate;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * SecurityConfig
@@ -50,11 +42,8 @@ public class ResourceServerConfig extends ResourceServerConfigurerAdapter {
     @Value("${security.oauth2.authorization.check-token-access}")
     private String checkTokenEndpointUrl;
 
-    @Autowired
-    private UnAuthenticationEntryPoint unauthorizedHandler;
-
-    @Autowired
-    private AuthAccessDeniedHandler authAccessDeniedHandler;
+    @Value("${security.oauth2.client.access-token-uri}")
+    private String accessTokenUri;
 
     @Autowired
     private RestTemplate restTemplate;
@@ -68,12 +57,13 @@ public class ResourceServerConfig extends ResourceServerConfigurerAdapter {
     }
 
     @Bean
-    public RemoteTokenServices tokenService() {
-        RemoteTokenServices tokenService = new RemoteTokenServices();
+    public CustomRemoteTokenServices tokenService() {
+        CustomRemoteTokenServices tokenService = new CustomRemoteTokenServices();
         tokenService.setClientId(clientId);
         tokenService.setClientSecret(secret);
         tokenService.setCheckTokenEndpointUrl(checkTokenEndpointUrl);
         tokenService.setRestTemplate(restTemplate);
+        tokenService.setAccessTokenUri(accessTokenUri);
         return tokenService;
     }
 
@@ -83,7 +73,7 @@ public class ResourceServerConfig extends ResourceServerConfigurerAdapter {
     }
 
     @Override
-    public void configure(ResourceServerSecurityConfigurer resources) throws Exception {
+    public void configure(ResourceServerSecurityConfigurer resources) {
         resources.tokenServices(tokenService()).authenticationEntryPoint(new AuthExceptionEntryPoint());
     }
 
@@ -91,10 +81,14 @@ public class ResourceServerConfig extends ResourceServerConfigurerAdapter {
     public void configure(HttpSecurity http) throws Exception {
         http.authorizeRequests().antMatchers("/login/**", "/sms/**", "/password/forget").permitAll()
                 .and().authorizeRequests().anyRequest().authenticated()
-                .and().exceptionHandling().accessDeniedHandler(authAccessDeniedHandler).authenticationEntryPoint(unauthorizedHandler)
+                .and().exceptionHandling().accessDeniedHandler(new AuthAccessDeniedHandler()).authenticationEntryPoint(provideUnAuthenticationEntryPoint())
                 .and().sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                .and().csrf().disable();
-        http.headers().cacheControl();
+                .and().csrf().disable()
+                .headers().cacheControl().disable();
+    }
+
+    private UnAuthenticationEntryPoint provideUnAuthenticationEntryPoint() {
+        return new UnAuthenticationEntryPoint();
     }
 
 }

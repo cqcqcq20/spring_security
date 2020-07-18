@@ -35,6 +35,13 @@ spring:
         exclusions: "*.js,*.gif,*.jpg"
     username: user-client
     password: user-secret-8888
+  kafka:
+    producer:
+      bootstrap-servers: 192.168.31.52:9092
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      batch-size: 4096
+    bootstrap-servers: 192.168.31.52:9092
   liquibase:
     enabled: false
     drop-first: false
@@ -64,6 +71,15 @@ api:
     sequence:
       worker-id: 1
 
+sms:
+  verify:
+    length: 6
+    expMin: 5
+
+app:
+  password:
+    matches: "^[\\w_-]{6,16}$"
+
 logging:
   level:
-    org.springframework.security: debug
+    org.springframework: debug

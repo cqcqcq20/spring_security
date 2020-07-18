@@ -1,12 +1,12 @@
 package com.example.music.auth.config;
 
+import com.example.music.auth.basic.config.UnAuthenticationEntryPoint;
+import com.example.music.auth.basic.config.handler.AuthAccessDeniedHandler;
 import com.example.music.auth.config.granter.SMSCodeTokenGranter;
 import com.example.music.auth.config.provider.SmsCodeAuthenticationProvider;
 import com.example.music.auth.service.CustomUserDetailsService;
 import com.example.music.auth.service.RedisTokenService;
-import org.minbox.framework.api.boot.autoconfigure.sequence.ApiBootSequenceContext;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -22,14 +22,9 @@ import org.springframework.security.oauth2.provider.CompositeTokenGranter;
 import org.springframework.security.oauth2.provider.TokenGranter;
 import org.springframework.security.oauth2.provider.client.JdbcClientDetailsService;
 import org.springframework.security.oauth2.provider.error.WebResponseExceptionTranslator;
-import org.springframework.security.oauth2.provider.token.DefaultAccessTokenConverter;
 import org.springframework.security.oauth2.provider.token.TokenEnhancer;
 import org.springframework.security.oauth2.provider.token.TokenEnhancerChain;
-import org.springframework.security.oauth2.provider.token.TokenStore;
-import com.example.music.auth.exception.CustomOAuthException;
 import org.springframework.security.oauth2.provider.token.store.JdbcTokenStore;
-import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
-import com.example.music.auth.config.token.CustomAccessTokenConverter;
 
 import javax.sql.DataSource;
 import java.util.ArrayList;
@@ -53,52 +48,36 @@ public class OAuth2Config extends AuthorizationServerConfigurerAdapter {
     private DataSource dataSource;
 
     @Autowired
-    private TokenStore jwtTokenStore;
-
-    @Autowired
     private JdbcTokenStore jdbcTokenStore;
-
-    @Autowired
-    private JwtAccessTokenConverter jwtAccessTokenConverter;
-
-    @Autowired
-    private TokenEnhancer jwtTokenEnhancer;
 
     @Autowired
     private RedisTokenService redisTokenService;
 
     @Autowired
-    private ApiBootSequenceContext apiBootSequenceContext;
-
-    @Autowired
     private WebResponseExceptionTranslator<OAuth2Exception> customWebResponseExceptionTranslator;
 
     @Override
-    public void configure(final AuthorizationServerEndpointsConfigurer endpoints) throws Exception {
-//        TokenEnhancerChain enhancerChain = new TokenEnhancerChain();
-//        List<TokenEnhancer> enhancerList = new ArrayList<>();
-//        enhancerList.add(jwtTokenEnhancer);
-//        enhancerList.add(jwtAccessTokenConverter);
-//        enhancerChain.setTokenEnhancers(enhancerList);
-//        endpoints.tokenStore(jdbcTokenStore)
-//                .userDetailsService(customUserDetailsService)
-//                .authenticationManager(authenticationManager)
-////                .tokenEnhancer(enhancerChain)
-//                .accessTokenConverter(new DefaultAccessTokenConverter())
-//                .tokenGranter(tokenGranter(endpoints));
+    public void configure(AuthorizationServerEndpointsConfigurer endpoints) {
+        TokenEnhancerChain enhancerChain = new TokenEnhancerChain();
+        List<TokenEnhancer> enhancerList = new ArrayList<>();
+        enhancerList.add(provideTokenEnhancer());
+        enhancerChain.setTokenEnhancers(enhancerList);
         endpoints.authenticationManager(authenticationManager)
                 .tokenStore(jdbcTokenStore)
                 .tokenGranter(tokenGranter(endpoints))
-//                .accessTokenConverter(new CustomAccessTokenConverter())
-                .userDetailsService(customUserDetailsService);
-
-        endpoints.exceptionTranslator(customWebResponseExceptionTranslator);
+                .tokenEnhancer(enhancerChain)
+                .userDetailsService(customUserDetailsService)
+                .exceptionTranslator(customWebResponseExceptionTranslator);
     }
 
-    private TokenGranter tokenGranter(final AuthorizationServerEndpointsConfigurer endpoints) {
-        List<TokenGranter> granters = new ArrayList<>(Arrays.asList(endpoints.getTokenGranter()));
+    @Bean
+    public TokenEnhancer provideTokenEnhancer() {
+        return new AuthTokenEnhancer();
+    }
+
+    private TokenGranter tokenGranter(AuthorizationServerEndpointsConfigurer endpoints) {
         SMSCodeTokenGranter smsCodeTokenGranter = new SMSCodeTokenGranter(endpoints.getTokenServices(), endpoints.getClientDetailsService(), endpoints.getOAuth2RequestFactory(), authenticationManager);
-        granters.add(smsCodeTokenGranter);
+        List<TokenGranter> granters = new ArrayList<>(Arrays.asList(endpoints.getTokenGranter(),smsCodeTokenGranter));
         if (authenticationManager instanceof ProviderManager) {
             SmsCodeAuthenticationProvider smsCodeAuthenticationProvider = new SmsCodeAuthenticationProvider();
             smsCodeAuthenticationProvider.setUserServiceDetail(customUserDetailsService);
@@ -119,9 +98,11 @@ public class OAuth2Config extends AuthorizationServerConfigurerAdapter {
     }
 
     @Override
-    public void configure(AuthorizationServerSecurityConfigurer security) throws Exception {
-        security.allowFormAuthenticationForClients();
-        security.checkTokenAccess("isAuthenticated()");
-        security.tokenKeyAccess("permitAll()");
+    public void configure(AuthorizationServerSecurityConfigurer security) {
+        security.allowFormAuthenticationForClients()
+                .accessDeniedHandler(new AuthAccessDeniedHandler())
+                .authenticationEntryPoint(new UnAuthenticationEntryPoint())
+                .checkTokenAccess("isAuthenticated()")
+                .tokenKeyAccess("permitAll()");
     }
 }

@@ -6,7 +6,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
-import org.springframework.security.oauth2.provider.token.RemoteTokenServices;
 import org.springframework.stereotype.Component;
 
 import java.util.concurrent.TimeUnit;
