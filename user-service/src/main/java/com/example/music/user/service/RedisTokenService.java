@@ -1,5 +1,6 @@
 package com.example.music.user.service;
 
+import com.alibaba.fastjson.JSON;
 import com.example.music.common.sms.SmsEntity;
 import org.apache.commons.lang.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -7,7 +8,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Component;
+import org.springframework.util.MultiValueMap;
 
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 @Component
@@ -49,4 +52,6 @@ public class RedisTokenService {
         String keyName = String.format("%s:%s:%s",phone,area,type);
         redisTemplate.delete(keyName);
     }
+
+
 }

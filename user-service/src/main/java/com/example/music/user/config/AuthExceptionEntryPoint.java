@@ -1,5 +1,6 @@
 package com.example.music.user.config;
 
+import com.example.music.common.rep.HttpResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
@@ -21,18 +22,12 @@ public class AuthExceptionEntryPoint implements AuthenticationEntryPoint {
 
 
     @Override
-    public void commence(HttpServletRequest request, HttpServletResponse response,
-                         AuthenticationException authException)
-            throws ServletException {
-
-        Map<String,Object> map = new HashMap<>();
-        map.put("code", HttpServletResponse.SC_UNAUTHORIZED);
-        map.put("message",String.format("%s,%s",request.getServletPath(),authException.getMessage()));
+    public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws ServletException {
         response.setContentType("application/json");
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         try {
             ObjectMapper mapper = new ObjectMapper();
-            mapper.writeValue(response.getOutputStream(), map);
+            mapper.writeValue(response.getOutputStream(), HttpResponse.failure(HttpServletResponse.SC_UNAUTHORIZED,authException.getMessage()));
         } catch (Exception e) {
             throw new ServletException();
         }

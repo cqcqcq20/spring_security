@@ -16,7 +16,7 @@ public class UnAuthenticationEntryPoint implements AuthenticationEntryPoint {
     public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException, ServletException {
         response.setContentType("application/json");
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-        HttpResponse<Object> failure = HttpResponse.failure(HttpServletResponse.SC_UNAUTHORIZED, authException.getMessage());
+        HttpResponse<?> failure = HttpResponse.failure(HttpServletResponse.SC_UNAUTHORIZED, authException.getMessage());
         try {
             ObjectMapper mapper = new ObjectMapper();
             mapper.writeValue(response.getOutputStream(), failure);

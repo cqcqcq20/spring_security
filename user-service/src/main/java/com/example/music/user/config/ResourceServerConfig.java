@@ -3,6 +3,8 @@ package com.example.music.user.config;
 import com.example.music.auth.basic.config.UnAuthenticationEntryPoint;
 import com.example.music.auth.basic.config.handler.AuthAccessDeniedHandler;
 import com.example.music.user.config.token.CustomRemoteTokenServices;
+import com.example.music.user.service.LocalAccessTokenService;
+import com.example.music.user.service.RedisTokenService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -51,6 +53,9 @@ public class ResourceServerConfig extends ResourceServerConfigurerAdapter {
     @Autowired
     private RedisConnectionFactory connectionFactory;
 
+    @Autowired
+    private LocalAccessTokenService localAccessTokenService;
+
     @Bean
     public TokenStore redisTokenStore() {
         return new RedisTokenStore(connectionFactory);
@@ -58,7 +63,7 @@ public class ResourceServerConfig extends ResourceServerConfigurerAdapter {
 
     @Bean
     public CustomRemoteTokenServices tokenService() {
-        CustomRemoteTokenServices tokenService = new CustomRemoteTokenServices();
+        CustomRemoteTokenServices tokenService = new CustomRemoteTokenServices(localAccessTokenService);
         tokenService.setClientId(clientId);
         tokenService.setClientSecret(secret);
         tokenService.setCheckTokenEndpointUrl(checkTokenEndpointUrl);
@@ -79,7 +84,7 @@ public class ResourceServerConfig extends ResourceServerConfigurerAdapter {
 
     @Override
     public void configure(HttpSecurity http) throws Exception {
-        http.authorizeRequests().antMatchers("/login/**", "/sms/**", "/password/forget").permitAll()
+        http.authorizeRequests().antMatchers("/login/**", "/sms/**", "/password/forget","/actuator/**").permitAll()
                 .and().authorizeRequests().anyRequest().authenticated()
                 .and().exceptionHandling().accessDeniedHandler(new AuthAccessDeniedHandler()).authenticationEntryPoint(provideUnAuthenticationEntryPoint())
                 .and().sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)

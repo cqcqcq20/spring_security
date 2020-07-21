@@ -3,17 +3,16 @@ package com.example.music.common.aop;
 import com.alibaba.fastjson.JSONObject;
 import com.example.music.common.annotation.CheckParam;
 import com.example.music.common.annotation.CheckParams;
-import com.example.music.common.exception.ValidatorException;
 import com.example.music.common.rep.HttpResponse;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.Signature;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
-import org.aspectj.lang.annotation.Pointcut;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.core.Ordered;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import java.lang.reflect.Method;
 
@@ -71,11 +70,12 @@ public class ValidatorParamAop implements Ordered {
         if (isValid) {
             return null;
         }
-        String msg = anno.msg();
+        String alias = anno.alias();
+        String msg = String.format("%s%s", StringUtils.isEmpty(alias) ? argName : alias,anno.msg());
         if ("".equals(msg)) {
             msg = argName + ": " + anno.value().msg + " " + anno.express();
         }
-        int code = anno.code();
+        int code = anno.code().getCode();
         return HttpResponse.failure(code,msg);
     }
 

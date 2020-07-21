@@ -57,6 +57,7 @@ create table if not exists oauth_approvals (
 
 INSERT INTO oauth_client_details    (client_id, client_secret, scope, authorized_grant_types,    web_server_redirect_uri, authorities, access_token_validity,    refresh_token_validity, additional_information, autoapprove)
 VALUES    ('user-client', '$2a$10$o2l5kA7z.Caekp72h5kU7uqdTDrlamLq.57M1F6ulJln9tRtOJufq', 'all',    'authorization_code,refresh_token,password', null, null, 3600, 36000, null, true);
+VALUES    ('auth-client', '$2a$10$o2l5kA7z.Caekp72h5kU7uqdTDrlamLq.57M1F6ulJln9tRtOJufq', 'all',    'authorization_code,refresh_token,password,sms', null, null, 3600, 36000, null, true);
 
 CREATE TABLE IF NOT EXISTS `auth`.`user` (
     id BIGINT UNSIGNED NOT NULL COMMENT "uid",

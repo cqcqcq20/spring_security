@@ -5,7 +5,8 @@ import com.example.music.auth.config.token.SmsCodeAuthenticationToken;
 import com.example.music.auth.service.CustomUserDetailsService;
 import com.example.music.common.annotation.CheckParam;
 import com.example.music.common.annotation.CheckParams;
-import com.example.music.common.exception.PasswordCode;
+import com.example.music.common.exception.BasicErrorCode;
+import com.example.music.common.exception.ErrorCode;
 import com.example.music.common.rep.HttpResponse;
 import com.example.music.common.utils.Validator;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,12 +46,10 @@ public class UserController {
         User userPrincipal = (User) authentication.getPrincipal();
 
         if (!customUserDetailsService.updatePasswordById(userPrincipal.getUsername(),password)) {
-            return HttpResponse.failure(PasswordCode.PASSWORD_UPDATE_FAILURE);
+            return HttpResponse.failure(BasicErrorCode.VALIDATOR_FAILURE_ERROR);
         }
 
         return HttpResponse.success();
     }
-
-
 
 }

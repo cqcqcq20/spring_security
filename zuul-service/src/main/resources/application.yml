@@ -58,8 +58,8 @@ zuul:
       service-id: user-service
       sensitiveHeaders: Cookie,Set-Cookie
   ignored-services: "*"
-
-sms:
-  verify:
-    length: 6
-    expMin: 5
+  host:
+    max-total-connections: 1024
+    max-per-route-connections: 512
+  semaphore:
+    max-semaphores: ${zuul.host.max-total-connections}

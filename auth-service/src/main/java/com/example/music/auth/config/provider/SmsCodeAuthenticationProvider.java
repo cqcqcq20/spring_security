@@ -3,7 +3,7 @@ package com.example.music.auth.config.provider;
 import com.example.music.auth.config.token.SmsCodeAuthenticationToken;
 import com.example.music.auth.service.CustomUserDetailsService;
 import com.example.music.auth.service.RedisTokenService;
-import com.example.music.common.exception.VerifyCodeException;
+import com.example.music.auth.exception.AuthVerifyCodeException;
 import lombok.Data;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -31,7 +31,7 @@ public class SmsCodeAuthenticationProvider implements AuthenticationProvider {
 
         String smscode = authenticationToken.getCode();
         if (StringUtils.isEmpty(smsCodeCached) || !smscode.equals(smsCodeCached)) {
-            throw new VerifyCodeException("验证码错误");
+            throw new AuthVerifyCodeException("验证码错误");
         } else {
             redisTokenService.removeVerificationCode(phone,area,type);
         }

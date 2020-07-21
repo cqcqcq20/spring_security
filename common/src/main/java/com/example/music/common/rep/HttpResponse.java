@@ -1,21 +1,26 @@
 package com.example.music.common.rep;
 
-import com.example.music.common.exception.CommonErrorCode;
+import com.example.music.common.exception.BasicErrorCode;
+import com.example.music.common.exception.ErrorCode;
 import com.example.music.common.serializer.ResponseSerializer;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @JsonSerialize(using = ResponseSerializer.class)
 public class HttpResponse<T> {
 
-
     public static final String MSG_SUCCESS = "success";
     public static final String MSG_FAILURE = "failure";
 
-    private int code = CommonErrorCode.SUCCESS;
+    private int code;
 
     private String msg = MSG_SUCCESS;
 
     private T payload;
+
+    private HashMap<String,String> header;
 
     public HttpResponse() {
     }
@@ -26,6 +31,11 @@ public class HttpResponse<T> {
 
     public HttpResponse(T payload) {
         this.payload = payload;
+    }
+
+    public HttpResponse(ErrorCode errorCode) {
+        this.code = errorCode.getCode();
+        this.msg = errorCode.getMsg();
     }
 
     public HttpResponse(int code, String msg) {
@@ -78,8 +88,20 @@ public class HttpResponse<T> {
         this.payload = payload;
     }
 
+    public HttpResponse addHeader(String key,String value) {
+        if (header == null) {
+            header = new HashMap<>();
+        }
+        header.put(key,value);
+        return this;
+    }
+
+    public HashMap<String, String> getHeader() {
+        return header;
+    }
+
     public static <T> HttpResponse<T> success() {
-        return new HttpResponse<T>();
+        return new HttpResponse<T>(BasicErrorCode.SUCCESS);
     }
 
     public static <T> HttpResponse<T> success(int code) {
@@ -91,14 +113,14 @@ public class HttpResponse<T> {
     }
 
     public static <T> HttpResponse<T> failure() {
-        return new HttpResponse<T>(CommonErrorCode.ERROR_CODE_COMMON,MSG_FAILURE);
+        return new HttpResponse<T>(BasicErrorCode.ERROR_CODE_COMMON);
     }
 
     public static <T> HttpResponse<T> failure(int code) {
         return new HttpResponse<T>(code,MSG_FAILURE);
     }
 
-    public static <T> HttpResponse<T> failure(CommonErrorCode code) {
+    public static <T> HttpResponse<T> failure(ErrorCode code) {
         return new HttpResponse<T>(code.getCode(),code.getMsg());
     }
 
@@ -107,7 +129,7 @@ public class HttpResponse<T> {
     }
 
     public static <T> HttpResponse<T> failure(String msg) {
-        return new HttpResponse<T>(CommonErrorCode.ERROR_CODE_COMMON,msg);
+        return new HttpResponse<T>(BasicErrorCode.ERROR_CODE_COMMON.setMsg(msg));
     }
 
 }

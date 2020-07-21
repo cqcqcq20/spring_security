@@ -1,12 +1,12 @@
 package com.example.music.common.exception;
 
-public class VerifyCodeException extends RuntimeException implements CommonErrorCode {
+public class BadRequestException extends RuntimeException implements ErrorCode {
 
     private int code;
 
-    public VerifyCodeException(String s) {
+    public BadRequestException(String s) {
         super(s);
-        this.code = CommonErrorCode.VERIFY_CODE_ERROR;
+        this.code = BasicErrorCode.VALIDATOR_FAILURE_ERROR.getCode();
     }
 
     @Override

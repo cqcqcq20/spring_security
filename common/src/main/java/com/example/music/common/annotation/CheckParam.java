@@ -1,6 +1,7 @@
 package com.example.music.common.annotation;
 
-import com.example.music.common.exception.CommonErrorCode;
+import com.example.music.common.exception.BasicErrorCode;
+import com.example.music.common.exception.ErrorCode;
 import com.example.music.common.utils.Validator;
 
 import java.lang.annotation.*;
@@ -15,8 +16,10 @@ public @interface CheckParam {
 
     String argName();
 
+    String alias() default "";
+
     String msg() default "";
 
-    int code() default CommonErrorCode.VALIDATOR_FAILURE_ERROR;
+    BasicErrorCode code() default BasicErrorCode.VALIDATOR_FAILURE_ERROR;
 
 }

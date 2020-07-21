@@ -1,20 +1,20 @@
-package com.example.music.common.exception;
+package com.example.music.user.excption;
 
-public enum PasswordCode implements CommonErrorCode {
-    PASSWORD_WORD_NOT_MATCHES(10022,"password not matches"),
-    PASSWORD_WORD_INVALID(10023,"password invalid"),
-    PASSWORD_UPDATE_FAILURE(10024,"password update failure");
+import com.example.music.common.exception.ErrorCode;
+
+public enum UserErrorCode implements ErrorCode {
+
+    VERIFY_CODE_INVIABLE(10020,"验证码错误");
 
     private int code;
 
     private String msg;
 
-    PasswordCode(int code, String msg) {
+    UserErrorCode(int code, String msg) {
         this.code = code;
         this.msg = msg;
     }
 
-    @Override
     public int getCode() {
         return code;
     }
@@ -23,7 +23,6 @@ public enum PasswordCode implements CommonErrorCode {
         this.code = code;
     }
 
-    @Override
     public String getMsg() {
         return msg;
     }

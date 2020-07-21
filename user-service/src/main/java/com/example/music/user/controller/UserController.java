@@ -2,6 +2,7 @@ package com.example.music.user.controller;
 
 import com.example.music.common.annotation.CheckParam;
 import com.example.music.common.annotation.CheckParams;
+import com.example.music.common.exception.BasicErrorCode;
 import com.example.music.common.rep.HttpResponse;
 import com.example.music.auth.basic.aop.ApiLog;
 import com.example.music.common.users.UserEntity;
@@ -35,9 +36,9 @@ public class UserController {
     @PreAuthorize("hasAuthority('app')")
     @ApiLog(module = "user",desc = "更新用户头像")
     @CheckParams({
-            @CheckParam(value = Validator.FileContentType,argName = "avatar",express = "image/jpeg,image/png",msg = "请上传png、jpeg图片",code = 10003),
+            @CheckParam(value = Validator.FileContentType,argName = "avatar",alias = "头像",express = "image/jpeg,image/png",msg = "请上传png、jpeg图片",code = BasicErrorCode.VALIDATOR_FAILURE_ERROR),
     })
-    public HttpResponse<?> updateAvatar(Principal principal, @RequestParam("avatar") MultipartFile avatar) {
+    public HttpResponse<?> updateAvatar(Principal principal,  MultipartFile avatar) {
         String path = avatar.getOriginalFilename();
         customUserDetailsService.updateAvatar(principal.getName(),path);
         UserEntity userEntity = customUserDetailsService.loadUserByUserId(principal.getName());

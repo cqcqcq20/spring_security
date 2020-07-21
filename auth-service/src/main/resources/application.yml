@@ -12,8 +12,8 @@ spring:
       pool:
         max-active: 8
         max-idle: 8
-        min-idle: 0
-    timeout: 100ms
+        min-idle: 4
+    timeout: 1000ms
   datasource:
     type: com.alibaba.druid.pool.DruidDataSource
     druid:
@@ -25,9 +25,9 @@ spring:
         login-password: admin
         enabled: true
         url-pattern: /druid/*
-      initial-size: 10
-      min-idle: 10
-      max-active: 100
+      initial-size: 100
+      min-idle: 50
+      max-active: 200
       max-wait: 65535
       web-stat-filter:
         enabled: true

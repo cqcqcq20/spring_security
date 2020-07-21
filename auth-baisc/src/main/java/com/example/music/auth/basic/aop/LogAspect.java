@@ -1,9 +1,14 @@
 package com.example.music.auth.basic.aop;
 
-import com.example.music.common.exception.CommonErrorCode;
+import com.example.music.common.exception.BasicErrorCode;
+import com.example.music.common.exception.ErrorCode;
 import com.example.music.common.rep.HttpResponse;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
+import org.aspectj.lang.annotation.AfterReturning;
+import org.aspectj.lang.annotation.AfterThrowing;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,115 +20,76 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
-import javax.servlet.http.HttpServletRequest;
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
-import java.text.SimpleDateFormat;
-import java.util.*;
 
+/**
+ * 用于记录apiLog修饰的请求
+ */
 @Aspect
 @Component
 @Slf4j
-public class LogAspect implements Ordered {
+public class LogAspect extends LogRecordBuilder implements Ordered {
 
     @Autowired
-    private KafkaTemplate<String,Object> kafkaTemplate;
+    private KafkaTemplate<String, Object> kafkaTemplate;
 
     @Override
     public int getOrder() {
         return 0;
     }
 
-    @Around("@annotation(apiLog)")
-    public Object doAround(ProceedingJoinPoint joinPoint, ApiLog apiLog) throws Throwable {
-        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
-        Object result = null;
-        JSONObject message = new JSONObject();
-        message.put("module",apiLog.module());
-        message.put("desc",apiLog.desc());
-        long uid = -1;
-        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        if (principal != null && !"anonymousUser".equals(principal)) {
-            uid = Long.parseLong(principal.toString());
+    @AfterReturning(value = "@annotation(apiLog)" ,returning = "response")
+    public void doAfterReturn(JoinPoint joinPoint, ApiLog apiLog,Object response) throws Throwable {
+        JSONObject message = connectMessage(joinPoint,getPrincipal(),  apiLog.module(),apiLog.desc());
+        if (response instanceof HttpResponse) {
+            HttpResponse<?> httpResponse = (HttpResponse<?>) response;
+            message.put("code", httpResponse.getCode());
+            message.put("msg", httpResponse.getMsg());
         }
-
-        message.put("uid",uid);
-
-        Date now = new Date();
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");//可以方便地修改日期格式
-        message.put("time", dateFormat.format(now));//时间
-
-        message.put("ip", getIpAddr(request));
-        message.put("port", request.getRemotePort());
-        message.put("url", String.format("%s%s",apiLog.module(),request.getRequestURI()));//url
-        message.put("method", request.getMethod());//请求方法
-        message.put("entry", joinPoint.getSignature().getName());//调用方法
-        message.put("params",mapToString(request.getParameterMap()));//参数
-
-        result = joinPoint.proceed();
-        if (result instanceof HttpResponse) {
-            HttpResponse<?> httpResponse = (HttpResponse<?>) result;
-            message.put("code",httpResponse.getCode());
-            message.put("msg",httpResponse.getMsg());
-        }
-        kafkaTemplate.send("service-request-log",message.toString());
+        sendToQueue( message.toString());
         log.info(message.toString());
-        return result;
     }
 
-    private Object doProcessException(Exception e,JSONObject message) throws Exception {
-        if (e instanceof CommonErrorCode) {
-            CommonErrorCode commonErrorCode = (CommonErrorCode) e;
-            message.put("code",commonErrorCode.getCode());
-            message.put("msg",commonErrorCode.getMsg());
-            return HttpResponse.failure(commonErrorCode.getCode(),commonErrorCode.getMsg());
+    private long getPrincipal() {
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (principal != null && !"anonymousUser".equals(principal) && principal instanceof String) {
+            return Long.parseLong(principal.toString());
         }
-        return HttpResponse.failure(CommonErrorCode.ERROR_CODE_SERVER_500,e.getClass().getName());
+        return -1;
     }
 
-    //如果不需要ip地址，这段可以省略
-    public String getIpAddr(HttpServletRequest request) {
-        String ipAddress = null;
-        ipAddress = request.getHeader("x-forwarded-for");
-        if (ipAddress == null || ipAddress.length() == 0
-                || "unknown".equalsIgnoreCase(ipAddress)) {
-            ipAddress = request.getHeader("Proxy-Client-IP");
+    @AfterThrowing(throwing = "ex", value = "@annotation(apiLog)")
+    public void doThrowing(JoinPoint joinPoint, Throwable ex, ApiLog apiLog) throws Throwable {
+        JSONObject message = connectMessage(joinPoint,getPrincipal(), apiLog.module(),apiLog.desc());
+        HttpResponse<?> failure = HttpResponse.failure(BasicErrorCode.ERROR_CODE_SERVER_500);
+        if (ex instanceof ErrorCode) {
+            ErrorCode errorCode = (ErrorCode) ex;
+            message.put("code", errorCode.getCode());
+            message.put("msg", errorCode.getMsg());
+            failure = HttpResponse.failure(errorCode);
+        } else if (ex.getStackTrace() != null && ex.getStackTrace().length > 0) {
+            StackTraceElement stackTraceElement = ex.getStackTrace()[0];
+            String msg = String.format("%s[%d]", stackTraceElement.getClassName(), stackTraceElement.getLineNumber());
+            message.put("code", failure.getCode());
+            message.put("msg", msg);
         }
-        if (ipAddress == null || ipAddress.length() == 0
-                || "unknown".equalsIgnoreCase(ipAddress)) {
-            ipAddress = request.getHeader("WL-Proxy-Client-IP");
+        log.info(message.toString());
+        sendToQueue(message.toString());
+
+        HttpServletResponse response = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getResponse();
+        response.setContentType("application/json");
+        response.setStatus(HttpServletResponse.SC_OK);
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            mapper.writeValue(response.getOutputStream(), failure);
+        } catch (Exception e) {
+            throw new ServletException();
         }
-        if (ipAddress == null || ipAddress.length() == 0
-                || "unknown".equalsIgnoreCase(ipAddress)) {
-            ipAddress = request.getRemoteAddr();
-        }
-        // 对于通过多个代理的情况，第一个IP为客户端真实IP,多个IP按照','分割
-        if (ipAddress != null && ipAddress.length() > 15) { // "***.***.***.***".length()
-            // = 15
-            if (ipAddress.indexOf(",") > 0) {
-                ipAddress = ipAddress.substring(0, ipAddress.indexOf(","));
-            }
-        }
-        //或者这样也行,对于通过多个代理的情况，第一个IP为客户端真实IP,多个IP按照','分割
-        //return ipAddress!=null&&!"".equals(ipAddress)?ipAddress.split(",")[0]:null;
-        return ipAddress;
     }
 
-    private String mapToString(Map<String,String[]> stringStringMap) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("[");
-        Set<Map.Entry<String, String[]>> entries = stringStringMap.entrySet();
-        Iterator<Map.Entry<String, String[]>> iterator = entries.iterator();
-        while (iterator.hasNext()) {
-            Map.Entry<String, String[]> next = iterator.next();
-            sb.append(next.getKey())
-                    .append("=")
-                    .append(Arrays.toString(next.getValue()));
-            if (iterator.hasNext()) {
-                sb.append(",");
-            }
-        }
-
-        sb.append("]");
-        return sb.toString();
+    private void sendToQueue(String data) {
+        kafkaTemplate.send("service-request-log", data);
     }
+
 }

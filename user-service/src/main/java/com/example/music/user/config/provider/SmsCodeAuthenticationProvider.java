@@ -1,6 +1,6 @@
 package com.example.music.user.config.provider;
 
-import com.example.music.common.exception.VerifyCodeException;
+import com.example.music.common.exception.BadRequestException;
 import com.example.music.common.users.UserEntity;
 import com.example.music.user.config.token.SmsCodeAuthenticationToken;
 import com.example.music.user.service.CustomUserDetailsService;
@@ -33,7 +33,7 @@ public class SmsCodeAuthenticationProvider implements AuthenticationProvider {
 
         String smscode = authenticationToken.getCode();
         if (StringUtils.isEmpty(smsCodeCached) || !smscode.equals(smsCodeCached)) {
-            throw new VerifyCodeException("验证码错误");
+            throw new BadRequestException("验证码错误");
         } else {
             redisTokenService.removeVerificationCode(phone,area,type);
         }

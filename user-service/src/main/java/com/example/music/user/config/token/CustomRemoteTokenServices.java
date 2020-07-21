@@ -1,5 +1,7 @@
 package com.example.music.user.config.token;
 
+import com.example.music.user.service.LocalAccessTokenService;
+import com.example.music.user.service.RedisTokenService;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -41,8 +43,11 @@ public class CustomRemoteTokenServices extends RemoteTokenServices {
 
     private AccessTokenConverter tokenConverter = new DefaultAccessTokenConverter();
 
-    public CustomRemoteTokenServices() {
+    private LocalAccessTokenService localAccessTokenService;
+
+    public CustomRemoteTokenServices(LocalAccessTokenService localAccessTokenService) {
         restTemplate = new RestTemplate();
+        this.localAccessTokenService = localAccessTokenService;
         ((RestTemplate) restTemplate).setErrorHandler(new DefaultResponseErrorHandler() {
             @Override
             // Ignore 400
@@ -96,23 +101,27 @@ public class CustomRemoteTokenServices extends RemoteTokenServices {
     @Override
     public OAuth2Authentication loadAuthentication(String accessToken) throws AuthenticationException, InvalidTokenException {
 
-        MultiValueMap<String, String> formData = new LinkedMultiValueMap<String, String>();
-        formData.add(tokenName, accessToken);
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("Authorization", getAuthorizationHeader(clientId, clientSecret));
-        Map<String, Object> map = postForMap(checkTokenEndpointUrl, formData, headers);
+        MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
+        Map<String, Object> map = localAccessTokenService.getAccessToken(accessToken);
+        if (map == null) {
+            formData.add(tokenName, accessToken);
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("Authorization", getAuthorizationHeader(clientId, clientSecret));
+            map = postForMap(checkTokenEndpointUrl, formData, headers);
 
-        if (map.containsKey("error")) {
-            if (logger.isDebugEnabled()) {
-                logger.debug("check_token returned error: " + map.get("error"));
+            if (map.containsKey("error")) {
+                if (logger.isDebugEnabled()) {
+                    logger.debug("check_token returned error: " + map.get("error"));
+                }
+                throw new InvalidTokenException(accessToken);
             }
-            throw new InvalidTokenException(accessToken);
-        }
 
-        // gh-838
-        if (!Boolean.TRUE.equals(map.get("active"))) {
-            logger.debug("check_token returned active attribute: " + map.get("active"));
-            throw new InvalidTokenException(accessToken);
+            // gh-838
+            if (!Boolean.TRUE.equals(map.get("active"))) {
+                logger.debug("check_token returned active attribute: " + map.get("active"));
+                throw new InvalidTokenException(accessToken);
+            }
+            localAccessTokenService.storeAccessToken(accessToken,map,Long.parseLong(map.get("exp").toString()));
         }
 
         return tokenConverter.extractAuthentication(map);
